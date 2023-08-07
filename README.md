@@ -34,6 +34,7 @@ Example:
 ```
 Anomalies detected: 25.1, 25.4
 
+
 ![Solution design overview](doc/image1.png?raw=true "Solution design overview")
 
 ## What is expected from you
