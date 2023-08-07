@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.List;
 import java.util.Optional;
 
 @Component
@@ -15,7 +16,8 @@ public class AnomalyDetectorImpl implements AnomalyDetector {
     private double sum = 0.0;
 
     @Override
-    public Optional<Anomaly> apply(TemperatureReading temperatureReading) {
+    public Optional<Anomaly> apply(List<TemperatureReading> temperatureReadings) {
+        final TemperatureReading temperatureReading = temperatureReadings.get(0);
         final double temperature = temperatureReading.temperature();
         if (LAST_9_MEASUREMENTS.size() < 9) {
             updateTemperatures(temperatureReading);
