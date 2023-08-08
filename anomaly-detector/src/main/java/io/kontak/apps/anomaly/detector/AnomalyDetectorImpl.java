@@ -17,27 +17,30 @@ public class AnomalyDetectorImpl implements AnomalyDetector {
 
     @Override
     public Optional<Anomaly> apply(List<TemperatureReading> temperatureReadings) {
-        final TemperatureReading temperatureReading = temperatureReadings.get(0);
-        final double temperature = temperatureReading.temperature();
-        if (LAST_9_MEASUREMENTS.size() < 9) {
-            updateTemperatures(temperatureReading);
-            return Optional.empty();
-        } else if (LAST_9_MEASUREMENTS.size() == 9) {
-            Optional<Anomaly> anomaly = Optional.empty();
-            if (Math.abs(getAvg() - temperature) > 5) {
-                anomaly = Optional.of(new Anomaly(
-                        temperature,
-                        temperatureReading.roomId(),
-                        temperatureReading.thermometerId(),
-                        temperatureReading.timestamp()
-                ));
+        for (var temperatureReading : temperatureReadings) {
+            final double temperature = temperatureReading.temperature();
+            if (LAST_9_MEASUREMENTS.size() < 9) {
+                updateTemperatures(temperatureReading);
+            } else if (LAST_9_MEASUREMENTS.size() == 9) {
+                boolean shouldReturnAnomaly = false;
+                if (Math.abs(getAvg() - temperature) > 5) {
+                    shouldReturnAnomaly = true;
+                }
+                sum -= LAST_9_MEASUREMENTS.remove().temperature();
+                updateTemperatures(temperatureReading);
+                if (shouldReturnAnomaly) {
+                    return Optional.of(new Anomaly(
+                            temperature,
+                            temperatureReading.roomId(),
+                            temperatureReading.thermometerId(),
+                            temperatureReading.timestamp()
+                    ));
+                }
+            } else {
+                throw new RuntimeException("should never happen");
             }
-            sum -= LAST_9_MEASUREMENTS.remove().temperature();
-            updateTemperatures(temperatureReading);
-            return anomaly;
-        } else {
-            throw new RuntimeException("should never happen");
         }
+        return Optional.empty();
     }
 
     private void updateTemperatures(TemperatureReading temperatureReading) {
@@ -47,5 +50,11 @@ public class AnomalyDetectorImpl implements AnomalyDetector {
 
     private double getAvg() {
         return sum / LAST_9_MEASUREMENTS.size();
+    }
+
+    @Override
+    public void clearCache() {
+        LAST_9_MEASUREMENTS.clear();
+        sum = 0.0;
     }
 }

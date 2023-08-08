@@ -20,4 +20,8 @@ public class AlwaysAnomalyAnomalyDetector implements AnomalyDetector {
                 temperatureReading.timestamp()
         ));
     }
+
+    @Override
+    public void clearCache() {
+    }
 }
