@@ -1,5 +1,6 @@
 package io.kontak.apps.anomaly.detector;
 
+import io.kontak.apps.anomaly.detector.storage.service.AnomalyService;
 import io.kontak.apps.event.Anomaly;
 import io.kontak.apps.event.TemperatureReading;
 import org.springframework.stereotype.Component;
@@ -13,7 +14,12 @@ import java.util.Optional;
 public class AnomalyDetectorImpl implements AnomalyDetector {
 
     private static final Deque<TemperatureReading> LAST_9_MEASUREMENTS = new ArrayDeque<>(9);
+    private final AnomalyService anomalyService;
     private double sum = 0.0;
+
+    public AnomalyDetectorImpl(AnomalyService anomalyService) {
+        this.anomalyService = anomalyService;
+    }
 
     @Override
     public Optional<Anomaly> apply(List<TemperatureReading> temperatureReadings) {
@@ -29,12 +35,14 @@ public class AnomalyDetectorImpl implements AnomalyDetector {
                 sum -= LAST_9_MEASUREMENTS.remove().temperature();
                 updateTemperatures(temperatureReading);
                 if (shouldReturnAnomaly) {
-                    return Optional.of(new Anomaly(
+                    final Anomaly anomaly = new Anomaly(
                             temperature,
                             temperatureReading.roomId(),
                             temperatureReading.thermometerId(),
                             temperatureReading.timestamp()
-                    ));
+                    );
+                    anomalyService.saveAnomaly(anomaly);
+                    return Optional.of(anomaly);
                 }
             } else {
                 throw new RuntimeException("should never happen");

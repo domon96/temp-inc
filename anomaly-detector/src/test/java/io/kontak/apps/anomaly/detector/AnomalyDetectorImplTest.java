@@ -4,6 +4,11 @@ import io.kontak.apps.event.Anomaly;
 import io.kontak.apps.event.TemperatureReading;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.junit.MockitoJUnitRunner;
+import io.kontak.apps.anomaly.detector.storage.service.AnomalyService;
 
 import java.util.List;
 import java.util.Optional;
@@ -11,10 +16,17 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
+@RunWith(MockitoJUnitRunner.class)
 class AnomalyDetectorImplTest {
 
-    private final AnomalyDetector anomalyDetector = new AnomalyDetectorImpl();
+    @Mock
+    private final AnomalyService anomalyService = Mockito.mock(AnomalyService.class);
+    private final AnomalyDetector anomalyDetector = new AnomalyDetectorImpl(anomalyService);
 
     @BeforeEach
     public void clearCache() {
@@ -32,6 +44,8 @@ class AnomalyDetectorImplTest {
                 reading(1), reading(1), reading(1),
                 reading(1), reading(1), reading(100)
         )));
+
+        verifyNoInteractions(anomalyService);
     }
 
     @Test
@@ -59,6 +73,8 @@ class AnomalyDetectorImplTest {
                 getNumberOfReadingsWithAvg(10, 10).stream(),
                 getNumberOfReadingsWithAvg(10, 5).stream()
         ).toList()));
+
+        verifyNoInteractions(anomalyService);
     }
 
     @Test
@@ -74,6 +90,10 @@ class AnomalyDetectorImplTest {
                         getNumberOfReadingsWithAvg(10, 10).stream(),
                         getNumberOfReadingsWithAvg(1, 2).stream()
                 ).toList()));
+
+        verify(anomalyService, times(1)).saveAnomaly(anomaly(20));
+        verify(anomalyService, times(1)).saveAnomaly(anomaly(2));
+        verifyNoMoreInteractions(anomalyService);
     }
 
     @Test
@@ -83,6 +103,8 @@ class AnomalyDetectorImplTest {
         anomalyDetector.clearCache();
         assertEquals(Optional.empty(), anomalyDetector.apply(getNumberOfReadingsWithAvg(10, 10)));
         assertEquals(Optional.empty(), anomalyDetector.apply(List.of(reading(5))));
+
+        verifyNoInteractions(anomalyService);
     }
 
     @Test
@@ -96,6 +118,10 @@ class AnomalyDetectorImplTest {
         assertEquals(Optional.empty(), anomalyDetector.apply(List.of(reading(5))));
         // new average < 10
         assertEquals(Optional.of(anomaly(15)), anomalyDetector.apply(List.of(reading(15))));
+
+        verify(anomalyService, times(1)).saveAnomaly(anomaly(5));
+        verify(anomalyService, times(1)).saveAnomaly(anomaly(15));
+        verifyNoMoreInteractions(anomalyService);
     }
 
     private TemperatureReading reading(int temp) {
