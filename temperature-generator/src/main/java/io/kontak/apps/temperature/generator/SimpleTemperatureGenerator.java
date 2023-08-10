@@ -19,7 +19,6 @@ public class SimpleTemperatureGenerator implements TemperatureGenerator {
     }
 
     private TemperatureReading generateSingleReading() {
-        //TODO basic implementation, should be changed to the one that will allow to test and demo solution on realistic data
         return new TemperatureReading(
                 random.nextDouble(10d, 30d),
                 UUID.randomUUID().toString(),
