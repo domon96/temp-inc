@@ -34,4 +34,18 @@ public class AnomalyService {
                         anomalyDao.getTimestamp()
                 )).toList();
     }
+
+    public List<Anomaly> getAnomaliesByRoomId(String roomId) {
+        return anomalyRepository.findAllByRoomId(roomId).stream()
+                .map(anomalyDao -> new Anomaly(
+                        anomalyDao.getTemperature(),
+                        anomalyDao.getRoomId(),
+                        anomalyDao.getThermometerId(),
+                        anomalyDao.getTimestamp()
+                )).toList();
+    }
+
+    public List<String> getThermometersWithAmountOfAnomaliesHigherThanThreshold(int threshold) {
+        return anomalyRepository.findAllThermometersWithAmountOfAnomaliesHigherThan(threshold);
+    }
 }
